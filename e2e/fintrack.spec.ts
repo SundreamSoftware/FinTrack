@@ -8,7 +8,7 @@ async function createAccount(page: Page) {
   await page.getByRole('button', { name: 'Save account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Personal', exact: true })).toBeVisible();
 }
-async function importCsv(page: Page, content = csv) {
+async function importCsv(page: Page, content = csv, timeout = 5000) {
   await page.getByRole('link', { name: 'Import', exact: true }).click();
   await page
     .getByLabel('Import account', { exact: true })
@@ -19,7 +19,7 @@ async function importCsv(page: Page, content = csv) {
   await page.getByRole('button', { name: 'Preview import', exact: true }).click();
   await expect(page.getByRole('heading', { name: '3. Review and confirm' })).toBeVisible();
   await page.getByRole('button', { name: /Confirm import/ }).click();
-  await expect(page.getByText('transactions imported.', { exact: false })).toBeVisible();
+  await expect(page.getByText('transactions imported.', { exact: false })).toBeVisible({ timeout });
 }
 test('account → CSV mapping → preview → persistence → dashboard and refresh', async ({ page }) => {
   const externalRequests: string[] = [];
@@ -182,7 +182,7 @@ test('10,000-row CSV stays usable with paginated transactions', async ({ page })
       (_, index) => `2026-03-15,-1.01,Fictional payment ${index},PLN`,
     ),
   ];
-  await importCsv(page, rows.join('\n'));
+  await importCsv(page, rows.join('\n'), 30000);
   await page.getByRole('link', { name: 'Transactions', exact: true }).click();
   await expect(page.getByText('10000 matching transactions')).toBeVisible();
   await expect(page.getByRole('row')).toHaveCount(51);

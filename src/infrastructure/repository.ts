@@ -301,16 +301,15 @@ export class IndexedDbFinanceRepository implements FinanceRepository {
         importedRows: imported.length,
         duplicateRows: rows.filter((row) => row.status === 'DUPLICATE').length,
         invalidRows: rows.filter((row) => row.status === 'INVALID').length,
-        status:
-          imported.length === 0
-            ? 'FAILED'
-            : rows.some(
-                  (row) =>
-                    row.status === 'INVALID' ||
-                    (row.status === 'POTENTIAL_DUPLICATE' && !row.selected),
-                )
-              ? 'PARTIAL'
-              : 'COMPLETED',
+        status: rows.every((row) => row.status === 'INVALID')
+          ? 'FAILED'
+          : rows.some(
+                (row) =>
+                  row.status === 'INVALID' ||
+                  (row.status === 'POTENTIAL_DUPLICATE' && !row.selected),
+              )
+            ? 'PARTIAL'
+            : 'COMPLETED',
       };
       validateSnapshot({
         ...snapshot,

@@ -40,9 +40,22 @@ export function EmptyState({
     </div>
   );
 }
-export function Feedback({ error, notice }: { error: string; notice: string }) {
+export function Feedback({
+  error,
+  notice,
+  busy = false,
+}: {
+  error: string;
+  notice: string;
+  busy?: boolean;
+}) {
   return (
     <>
+      {busy && (
+        <p role="status" className="feedback">
+          Processing locally… Keep this tab open until the operation finishes.
+        </p>
+      )}
       {error && (
         <p role="alert" className="feedback error">
           {error}
