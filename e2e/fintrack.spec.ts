@@ -133,6 +133,7 @@ test('demo populates dashboard and forecast with responsive navigation', async (
   await expect(page.getByText('Fictional demo loaded', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Financial overview' })).toBeVisible();
+  await expect(page.getByRole('img', { name: /Monthly income and expense chart/ })).toBeVisible();
   await page.screenshot({
     path: `test-results/screenshots/dashboard-${testInfo.project.name}.png`,
     fullPage: true,
@@ -169,4 +170,22 @@ test('persistent browser profile survives closing and reopening the browser', as
   } finally {
     await reopenedBrowser.close();
   }
+});
+
+test('10,000-row CSV stays usable with paginated transactions', async ({ page }) => {
+  test.setTimeout(60000);
+  await createAccount(page);
+  const rows = [
+    'date,amount,description,currency',
+    ...Array.from(
+      { length: 10000 },
+      (_, index) => `2026-03-15,-1.01,Fictional payment ${index},PLN`,
+    ),
+  ];
+  await importCsv(page, rows.join('\n'));
+  await page.getByRole('link', { name: 'Transactions', exact: true }).click();
+  await expect(page.getByText('10000 matching transactions')).toBeVisible();
+  await expect(page.getByRole('row')).toHaveCount(51);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('Page 2 of 200')).toBeVisible();
 });

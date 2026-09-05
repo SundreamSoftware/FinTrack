@@ -306,7 +306,7 @@ strong {
   min-width: 0;
   color: #435368;
 }
-.field > span {
+.field > label {
   font-weight: 550;
 }
 .stats {
@@ -371,7 +371,7 @@ strong {
   flex-direction: row;
   align-items: center;
 }
-.panel-heading .field > span {
+.panel-heading .field > label {
   font-size: 0.75rem;
 }
 .panel-heading select {

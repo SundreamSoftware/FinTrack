@@ -35,8 +35,20 @@ export function CashFlowChart({ flows, currency }: { flows: CashFlow[]; currency
             formatter={(value) => formatMoney(Math.round(Number(value) * divisor), currency)}
           />
           <Legend />
-          <Bar dataKey="income" name="Income" fill="#24796a" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="expenses" name="Expenses" fill="#adc0d5" radius={[4, 4, 0, 0]} />
+          <Bar
+            isAnimationActive={false}
+            dataKey="income"
+            name="Income"
+            fill="#24796a"
+            radius={[4, 4, 0, 0]}
+          />
+          <Bar
+            isAnimationActive={false}
+            dataKey="expenses"
+            name="Expenses"
+            fill="#adc0d5"
+            radius={[4, 4, 0, 0]}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -73,6 +85,7 @@ export function ForecastChart({
           />
           <Legend />
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey="upper"
             name="Upper estimate"
@@ -80,6 +93,7 @@ export function ForecastChart({
             strokeDasharray="5 5"
           />
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey="expected"
             name="Expected savings"
@@ -87,6 +101,7 @@ export function ForecastChart({
             strokeWidth={3}
           />
           <Line
+            isAnimationActive={false}
             type="monotone"
             dataKey="lower"
             name="Lower estimate"

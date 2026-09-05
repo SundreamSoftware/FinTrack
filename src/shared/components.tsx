@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, type ReactElement, cloneElement, useId, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 export function PageHeader({
   title,
@@ -56,12 +56,19 @@ export function Feedback({ error, notice }: { error: string; notice: string }) {
     </>
   );
 }
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactElement<{ id?: string }>;
+}) {
+  const fieldId = useId();
   return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-    </label>
+    <div className="field">
+      <label htmlFor={fieldId}>{label}</label>
+      {cloneElement(children, { id: fieldId })}
+    </div>
   );
 }
 export function Panel({
