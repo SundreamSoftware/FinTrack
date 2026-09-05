@@ -1,0 +1,10 @@
+html {
+  color-scheme: light;
+}
+::selection {
+  background: #c5e2d7;
+  color: #183e32;
+}
+main:focus {
+  outline: none;
+}
