@@ -66,29 +66,41 @@ export const ruleSchema = z
         message: 'Amount rules need a currency and an integer minor-unit value',
       });
   });
-export const transactionSchema = z.object({
-  ...metadata,
-  accountId: id,
-  transactionDate: dateSchema,
-  bookingDate: dateSchema.optional(),
-  amount: moneySchema,
-  currency: currencySchema,
-  rawDescription: text,
-  normalizedDescription: text,
-  merchantId: id.optional(),
-  counterparty: text.optional(),
-  counterpartyAccount: text.optional(),
-  title: text.optional(),
-  balanceAfterTransaction: moneySchema.optional(),
-  categoryId: id.optional(),
-  type: z.enum(transactionTypes),
-  source: z.enum(['CSV', 'DEMO']),
-  importId: id.optional(),
-  fingerprint: z.string().min(1).max(16000),
-  recurringStatus: z.enum(['NONE', 'DETECTED', 'CONFIRMED', 'REJECTED', 'INACTIVE']),
-  note: text.optional(),
-  manualCategory: z.boolean().default(false),
-});
+export const transactionSchema = z
+  .object({
+    ...metadata,
+    accountId: id,
+    transactionDate: dateSchema,
+    bookingDate: dateSchema.optional(),
+    amount: moneySchema,
+    currency: currencySchema,
+    rawDescription: text,
+    normalizedDescription: text,
+    merchantId: id.optional(),
+    counterparty: text.optional(),
+    counterpartyAccount: text.optional(),
+    title: text.optional(),
+    balanceAfterTransaction: moneySchema.optional(),
+    categoryId: id.optional(),
+    type: z.enum(transactionTypes),
+    source: z.enum(['CSV', 'DEMO']),
+    importId: id.optional(),
+    fingerprint: z.string().min(1).max(16000),
+    recurringStatus: z.enum(['NONE', 'DETECTED', 'CONFIRMED', 'REJECTED', 'INACTIVE']),
+    note: text.optional(),
+    manualCategory: z.boolean().default(false),
+  })
+  .superRefine((transaction, context) => {
+    if (
+      ((transaction.type === 'INCOME' || transaction.type === 'REFUND') &&
+        transaction.amount < 0) ||
+      (['EXPENSE', 'FEE', 'CASH_WITHDRAWAL'].includes(transaction.type) && transaction.amount > 0)
+    )
+      context.addIssue({
+        code: 'custom',
+        message: 'Transaction type does not match the signed amount',
+      });
+  });
 export const importSchema = z.object({
   id,
   accountId: id,
@@ -107,6 +119,7 @@ export const budgetSchema = z.object({
   currency: currencySchema,
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
   recurrence: z.enum(['MONTHLY', 'ONCE']),
+  demo: z.boolean().optional(),
 });
 export const subscriptionSchema = z.object({
   id,

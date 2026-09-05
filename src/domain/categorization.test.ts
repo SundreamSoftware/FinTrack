@@ -111,3 +111,16 @@ describe('duplicate multiplicities', () => {
       'NEW',
     ]));
 });
+
+it('uses historical merchant classification already in the import preview', () => {
+  const categorize = createCategorizer({
+    ...context,
+    merchants: [{ id: 'merchant', name: 'BIEDRONKA' }],
+    history: [transaction({ merchantId: 'merchant', categoryId: 'travel', manualCategory: true })],
+  });
+  expect(
+    categorize(
+      transaction({ rawDescription: 'BIEDRONKA 512', normalizedDescription: 'BIEDRONKA 512' }),
+    ),
+  ).toBe('travel');
+});

@@ -12,6 +12,7 @@ import {
   transactionSchema,
   type Snapshot,
 } from '../domain/models';
+import { fingerprint } from '../domain/categorization';
 import { sumMoney } from '../domain/values';
 export const MAX_BACKUP_BYTES = 40 * 1024 * 1024;
 const collection = <T extends z.ZodType>(schema: T) => z.array(schema).max(100000);
@@ -41,6 +42,8 @@ export function validateSnapshot(input: unknown): Snapshot {
     snapshot.transactions.map((transaction) => [transaction.id, transaction]),
   );
   for (const transaction of snapshot.transactions) {
+    if (transaction.fingerprint !== fingerprint(transaction))
+      throw new Error('Backup contains an inconsistent transaction fingerprint');
     if (
       accounts.get(transaction.accountId)?.currency !== transaction.currency ||
       (transaction.categoryId && !categories.has(transaction.categoryId)) ||

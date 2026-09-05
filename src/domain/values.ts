@@ -28,6 +28,12 @@ export function parseMoney(raw: string, currency = 'PLN'): number {
   if (lastComma >= 0 && lastDot >= 0) {
     const decimal = lastComma > lastDot ? ',' : '.';
     const grouping = decimal === ',' ? '.' : ',';
+    const escapedGrouping = grouping === '.' ? '\\.' : ',';
+    const escapedDecimal = decimal === '.' ? '\\.' : ',';
+    if (
+      !new RegExp(`^[+-]?\\d{1,3}(?:${escapedGrouping}\\d{3})+${escapedDecimal}\\d+$`).test(compact)
+    )
+      throw new Error('Invalid digit grouping');
     normalized = compact.split(grouping).join('').replace(decimal, '.');
   } else normalized = compact.replace(',', '.');
   if (!new RegExp(`^[+-]?\\d+(?:\\.\\d{1,${Math.max(1, digits)}})?$`).test(normalized))

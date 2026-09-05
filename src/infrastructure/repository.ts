@@ -20,7 +20,12 @@ import {
   type Transaction,
   type ImportRecord,
 } from '../domain/models';
-import { createCategorizer, matchesRule, normalizeMerchant } from '../domain/categorization';
+import {
+  createCategorizer,
+  matchesRule,
+  normalizeMerchant,
+  normalizeTransactionMerchant,
+} from '../domain/categorization';
 import { validateSnapshot } from './backup';
 import { FinTrackDatabase } from './database';
 import type { PreviewRow } from './csv';
@@ -231,6 +236,7 @@ export class IndexedDbFinanceRepository implements FinanceRepository {
       const accounts = await this.database.accounts.toArray();
       for (const account of accounts.filter((account) => account.demo))
         await this.deleteAccount(account.id);
+      await this.database.budgets.filter((budget) => budget.demo === true).delete();
     });
   }
   async commitImport(
@@ -256,12 +262,19 @@ export class IndexedDbFinanceRepository implements FinanceRepository {
         .filter((row) => row.selected && row.transaction && row.status !== 'DUPLICATE')
         .map((row) => row.transaction)
         .filter((transaction): transaction is Transaction => !!transaction);
+      if (
+        selected.some(
+          (transaction) =>
+            transaction.accountId !== accountId || transaction.currency !== account.currency,
+        )
+      )
+        throw new Error('Import rows do not belong to the selected account');
       const merchantNames = new Map(
         snapshot.merchants.map((merchant) => [merchant.name, merchant]),
       );
       for (const transaction of selected) {
-        const name = normalizeMerchant(
-          transaction.counterparty || transaction.rawDescription,
+        const name = normalizeTransactionMerchant(
+          transaction,
           snapshot.merchantAliases,
           snapshot.merchants,
         );

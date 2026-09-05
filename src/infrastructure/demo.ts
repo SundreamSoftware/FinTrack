@@ -79,6 +79,7 @@ export function createDemo(): Snapshot {
       currency: 'PLN',
       month: current,
       recurrence: 'MONTHLY',
+      demo: true,
     },
     {
       ...metadata(),
@@ -87,6 +88,7 @@ export function createDemo(): Snapshot {
       currency: 'PLN',
       month: current,
       recurrence: 'MONTHLY',
+      demo: true,
     },
     {
       ...metadata(),
@@ -95,6 +97,7 @@ export function createDemo(): Snapshot {
       currency: 'PLN',
       month: current,
       recurrence: 'MONTHLY',
+      demo: true,
     },
   ];
   snapshot.subscriptions = detectSubscriptions(snapshot.transactions, snapshot.merchants, []);

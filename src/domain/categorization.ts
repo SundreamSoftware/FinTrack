@@ -30,6 +30,24 @@ export function normalizeMerchant(
       .slice(0, 200)
   );
 }
+export function normalizeTransactionMerchant(
+  transaction: Pick<Transaction, 'rawDescription' | 'counterparty'>,
+  aliases: MerchantAlias[] = [],
+  merchants: Merchant[] = [],
+): string {
+  const combined = normalizeText(
+    transaction.rawDescription + ' ' + (transaction.counterparty ?? ''),
+  );
+  const alias = aliases.find((alias) => combined.includes(normalizeText(alias.pattern)));
+  if (alias) {
+    const merchant = merchants.find((merchant) => merchant.id === alias.merchantId);
+    if (merchant) return merchant.name;
+  }
+  return (
+    knownMerchants.find((name) => combined.includes(name)) ??
+    normalizeMerchant(transaction.counterparty || transaction.rawDescription)
+  );
+}
 export function matchesRule(
   transaction: Transaction,
   rule: CategorizationRule,
@@ -82,20 +100,25 @@ export function createCategorizer(
       historical.set(transaction.merchantId, transaction.categoryId);
   }
   const merchants = new Map(context.merchants.map((merchant) => [merchant.id, merchant]));
+  const merchantsByName = new Map(
+    context.merchants.map((merchant) => [normalizeText(merchant.name), merchant]),
+  );
   return (transaction) => {
-    const merchant = transaction.merchantId ? merchants.get(transaction.merchantId) : undefined;
-    const name =
-      merchant?.name ??
-      normalizeMerchant(
-        transaction.counterparty || transaction.rawDescription,
-        context.merchantAliases,
-        context.merchants,
-      );
+    const normalizedName = normalizeTransactionMerchant(
+      transaction,
+      context.merchantAliases,
+      context.merchants,
+    );
+    const merchant =
+      (transaction.merchantId ? merchants.get(transaction.merchantId) : undefined) ??
+      merchantsByName.get(normalizeText(normalizedName));
+    const name = merchant?.name ?? normalizedName;
     const userRule = rules.find((rule) => matchesRule(transaction, rule, name));
     if (userRule) return userRule.categoryId;
     if (merchant?.categoryId) return merchant.categoryId;
-    if (transaction.merchantId && historical.has(transaction.merchantId))
-      return historical.get(transaction.merchantId);
+    const historicalMerchantId = merchant?.id ?? transaction.merchantId;
+    if (historicalMerchantId && historical.has(historicalMerchantId))
+      return historical.get(historicalMerchantId);
     for (const [categoryId, terms] of Object.entries(keywords))
       if (
         terms.some(

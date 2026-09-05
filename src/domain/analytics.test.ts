@@ -99,3 +99,18 @@ describe('forecast', () => {
       -10000,
     ));
 });
+
+describe('large transaction histories', () => {
+  it('calculates 50,000 transactions without precision loss', () => {
+    const history = Array.from({ length: 50000 }, (_, index) =>
+      transaction({
+        id: `payment-${index}`,
+        amount: index % 2 === 0 ? 101 : -100,
+        type: index % 2 === 0 ? 'INCOME' : 'EXPENSE',
+      }),
+    );
+    const flow = cashFlow(history, 'PLN');
+    expect(flow).toMatchObject({ income: 2525000, expenses: 2500000, net: 25000 });
+    expect(monthlySeries(history, 'PLN', 12, '2026-12')[0]?.net).toBe(25000);
+  });
+});

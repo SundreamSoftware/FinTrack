@@ -23,8 +23,11 @@ async function importCsv(page: Page, content = csv) {
 }
 test('account → CSV mapping → preview → persistence → dashboard and refresh', async ({ page }) => {
   const externalRequests: string[] = [];
+  const allowedOrigin = new URL(
+    test.info().project.use.baseURL ?? 'http://127.0.0.1:4173/FinTrack/',
+  ).origin;
   page.on('request', (request) => {
-    if (!request.url().startsWith(new URL(page.url()).origin) && !request.url().startsWith('data:'))
+    if (!request.url().startsWith(allowedOrigin) && !request.url().startsWith('data:'))
       externalRequests.push(request.url());
   });
   await createAccount(page);
@@ -143,4 +146,27 @@ test('demo populates dashboard and forecast with responsive navigation', async (
   await page.getByRole('link', { name: 'Reports', exact: true }).click();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Monthly cash flow' })).toBeVisible();
+});
+
+test('persistent browser profile survives closing and reopening the browser', async ({
+  playwright,
+}, testInfo) => {
+  const profile = testInfo.outputPath('persistent-profile');
+  const baseURL = testInfo.project.use.baseURL;
+  const firstBrowser = await playwright.chromium.launchPersistentContext(profile, { baseURL });
+  try {
+    const firstPage = await firstBrowser.newPage();
+    await createAccount(firstPage);
+    await importCsv(firstPage);
+  } finally {
+    await firstBrowser.close();
+  }
+  const reopenedBrowser = await playwright.chromium.launchPersistentContext(profile, { baseURL });
+  try {
+    const reopenedPage = await reopenedBrowser.newPage();
+    await reopenedPage.goto('./#/transactions');
+    await expect(reopenedPage.getByText('6 matching transactions')).toBeVisible();
+  } finally {
+    await reopenedBrowser.close();
+  }
 });

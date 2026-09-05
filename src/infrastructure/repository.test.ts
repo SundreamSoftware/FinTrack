@@ -88,3 +88,14 @@ describe('IndexedDB integration', () => {
       parseBackup(serializeBackup({ ...snapshot(), accounts: [account, account] })),
     ).toThrow('duplicate IDs'));
 });
+
+it('rejects forged fingerprints before restoring', () => {
+  expect(() =>
+    parseBackup(
+      serializeBackup({
+        ...snapshot(),
+        transactions: [{ ...transaction(), fingerprint: 'forged' }],
+      }),
+    ),
+  ).toThrow('fingerprint');
+});
